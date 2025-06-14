@@ -210,3 +210,6 @@ Altere o valor 768 para o que desejar. Por exemplo, 1024 para incluir tablets no
 ### Alterar o Estilo do Modal
 Todas as cores, tamanhos, sombras e animações são controladas pelo código CSS que adicionou no Passo 1.
 Sinta-se à vontade para ajustar os valores para que o modal se integre perfeitamente com o design do seu site.
+
+## Licença
+Este projeto está licenciado sob a Licença MIT. Veja o ficheiro LICENSE.md para mais detalhes.
