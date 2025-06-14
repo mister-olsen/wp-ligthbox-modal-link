@@ -81,6 +81,7 @@ Adicione o seguinte código CSS ao seu site. A forma mais segura é através do 
 .modal-close:hover { background: #f0f0f0; }
 @keyframes fadeIn { to { opacity: 1; } }
 @keyframes scaleIn { to { transform: scale(1); } }
+```
 
 ### Passo 2: Adicionar o JavaScript ao WordPress
 
@@ -181,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-
+```
 ## Como Usar
 
 Depois de instalado, usar o script é incrivelmente simples:
