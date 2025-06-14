@@ -192,7 +192,7 @@ Depois de instalado, usar o script é incrivelmente simples:
 3. Na barra lateral de configurações do bloco, abra a secção "Avançado".
 4. No campo "Classe(s) CSS adicional(ais)", escreva exatamente:
 
-link-modal
+```link-modal```
 
 5. Grave a sua página.
 
@@ -202,8 +202,11 @@ link-modal
 
 ### Alterar o Ponto de Quebra (Breakpoint)
 Pode alterar facilmente o tamanho do ecrã que distingue o comportamento "mobile" do "desktop". No código JavaScript, encontre esta linha:
-if (window.innerWidth <= 768)
+
+```if (window.innerWidth <= 768)```
+
 Altere o valor 768 para o que desejar. Por exemplo, 1024 para incluir tablets no comportamento "mobile".
 
 ### Alterar o Estilo do Modal
-Todas as cores, tamanhos, sombras e animações são controladas pelo código CSS que adicionou no Passo 1. Sinta-se à vontade para ajustar os valores para que o modal se integre perfeitamente com o design do seu site.
+Todas as cores, tamanhos, sombras e animações são controladas pelo código CSS que adicionou no Passo 1.
+Sinta-se à vontade para ajustar os valores para que o modal se integre perfeitamente com o design do seu site.
