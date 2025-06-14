@@ -102,46 +102,56 @@ Recomenda-se o uso do plugin [**WPCode – Insert Headers and Footers + Custom C
 
 ### Código JavaScript
 
-```javascript
+```/**
+ * Lightbox Inteligente para WordPress v2.0
+ * Compatível com Gutenberg (Parágrafos, Botões) e Elementor (Widgets de Texto, Botões, etc.)
+ * Abre links em lightbox no desktop e nova aba no mobile.
+ */
 document.addEventListener('DOMContentLoaded', function() {
-    // Procura por todos os PARÁGRAFOS que tenham a classe 'link-modal'
-    const modalParagraphs = document.querySelectorAll('p.link-modal');
+    
+    // Seleciona QUALQUER elemento que tenha a classe .link-modal. Isto é universal.
+    const modalTriggers = document.querySelectorAll('.link-modal');
 
-    // Para cada parágrafo encontrado...
-    modalParagraphs.forEach(paragraph => {
-        // ...encontre o link principal dentro dele, ignorando o link da âncora.
-        const targetLink = paragraph.querySelector('a:not(.ancora-elemento-link)');
+    modalTriggers.forEach(triggerElement => {
+        let targetLink = null;
+
+        // Verifica se o próprio elemento com a classe é o link.
+        if (triggerElement.tagName === 'A') {
+            targetLink = triggerElement;
+        } else {
+            // Se não for, encontra o primeiro link dentro dele.
+            // Isto funciona para blocos de botão e widgets do Elementor.
+            targetLink = triggerElement.querySelector('a');
+        }
         
-        // Se encontrarmos o link certo...
-        if (targetLink) {
-            // ...aplica a lógica de clique a esse link específico
+        // Se encontrámos um link e ele ainda não foi processado...
+        if (targetLink && !targetLink.classList.contains('modal-link-processed')) {
+            
+            // Marca este link como processado para evitar adicionar múltiplos 'ouvintes'
+            targetLink.classList.add('modal-link-processed');
+            
             targetLink.addEventListener('click', function(event) {
                 // Impede o comportamento padrão do link
                 event.preventDefault();
 
                 const url = this.getAttribute('href');
 
-                // Verifica a largura do ecrã para decidir a ação
+                // A lógica principal permanece a mesma
                 if (window.innerWidth <= 768) {
-                    // Em mobile, abre o link numa nova aba
                     window.open(url, '_blank');
                 } else {
-                    // Em desktop, cria e mostra o modal (lightbox)
                     createModal(url);
                 }
             });
         }
     });
 
-    // Função que cria dinamicamente o HTML do modal
+    // As funções de criar e fechar o modal não precisam de alterações.
+    // Elas são independentes do gatilho.
     function createModal(url) {
-        // Remove qualquer modal antigo que possa ter ficado aberto
         const oldModal = document.getElementById('meu-modal-unico');
-        if (oldModal) {
-            oldModal.remove();
-        }
+        if (oldModal) oldModal.remove();
 
-        // Cria os elementos do modal
         const modalOverlay = document.createElement('div');
         modalOverlay.className = 'modal-overlay';
         modalOverlay.id = 'meu-modal-unico';
@@ -151,35 +161,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const closeButton = document.createElement('span');
         closeButton.className = 'modal-close';
-        closeButton.innerHTML = '&times;'; // O 'X' para fechar
+        closeButton.innerHTML = '&times;';
 
         const iframe = document.createElement('iframe');
         iframe.src = url;
 
-        // Monta a estrutura do modal
         modalContent.appendChild(closeButton);
         modalContent.appendChild(iframe);
         modalOverlay.appendChild(modalContent);
-
-        // Adiciona o modal completo ao corpo (body) da página
         document.body.appendChild(modalOverlay);
 
-        // Adiciona a funcionalidade de fechar o modal
         closeButton.addEventListener('click', closeModal);
         modalOverlay.addEventListener('click', function(event) {
-            // Fecha apenas se clicar no fundo cinzento, não no conteúdo branco
-            if (event.target === modalOverlay) {
-                closeModal();
-            }
+            if (event.target === modalOverlay) closeModal();
         });
     }
 
-    // Função que remove o modal da página
     function closeModal() {
         const modal = document.getElementById('meu-modal-unico');
-        if (modal) {
-            modal.remove();
-        }
+        if (modal) modal.remove();
     }
 });
 ```
