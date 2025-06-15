@@ -34,53 +34,104 @@ Adicione o seguinte código CSS ao seu site. A forma mais segura é através do 
 3.  Copie e cole o código abaixo.
 
 ```css
-/* Estilos para o Modal Inteligente */
+/* --- Versão Completa do CSS para o Lightbox Inteligente v2.x --- */
+
+/* 1. Bloqueio de Scroll da Página de Fundo 
+   Esta é a regra reforçada que impede a página principal de fazer scroll
+   quando o modal está ativo. Atua sobre <html> e <body> para máxima
+   compatibilidade com temas e usa !important para garantir prioridade.
+*/
+html.modal-aberto,
+body.modal-aberto {
+  overflow: hidden !important;
+}
+
+
+/* 2. Fundo Escurecido (Overlay) 
+   Cobre a tela inteira e posiciona a janela do modal no centro.
+*/
 .modal-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.75);
+    position: fixed; /* Fica fixo na tela, mesmo com scroll */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Fundo preto com 80% de transparência */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10000;
-    opacity: 0;
-    animation: fadeIn 0.3s forwards;
+    z-index: 10000; /* Garante que fica por cima de todos os outros elementos */
+    opacity: 0; /* Começa invisível para a animação */
+    animation: fadeIn 0.3s forwards; /* Aplica a animação de entrada */
 }
+
+
+/* 3. A Janela do Modal (Conteúdo) 
+   A caixa branca onde o conteúdo da outra página é exibido.
+*/
 .modal-content {
     background-color: #fff;
-    width: 90%; max-width: 1200px;
-    height: 90%; max-height: 800px;
+    width: 90%;
+    max-width: 1200px; /* Largura máxima, pode ajustar se necessário */
+    height: 90%;
+    max-height: 800px; /* Altura máxima, pode ajustar se necessário */
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    position: relative;
-    transform: scale(0.9);
-    animation: scaleIn 0.3s forwards;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+    position: relative; /* Necessário para posicionar o botão de fechar */
+    transform: scale(0.9); /* Começa ligeiramente mais pequeno para a animação */
+    animation: scaleIn 0.3s forwards; /* Aplica a animação de entrada */
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Organiza o botão e o iframe verticalmente */
 }
-.modal-content iframe {
-    width: 100%; height: 100%;
-    border: none;
-    margin-top: 15px;
-}
+
+
+/* 4. Botão de Fechar (o 'X') */
 .modal-close {
     position: absolute;
-    top: -15px; right: -15px;
-    background: #fff; color: #333;
-    width: 35px; height: 35px;
-    border-radius: 50%;
+    top: -15px; /* Posiciona-o ligeiramente fora da caixa branca */
+    right: -15px;
+    background: #fff;
+    color: #333;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; /* Torna-o redondo */
     font-size: 28px;
-    line-height: 32px;
-    text-align: center;
+    line-height: 33px; /* Alinha o 'X' verticalmente */
+    text-align: center; /* Alinha o 'X' horizontalmente */
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     font-weight: bold;
+    transition: transform 0.2s, background-color 0.2s;
 }
-.modal-close:hover { background: #f0f0f0; }
-@keyframes fadeIn { to { opacity: 1; } }
-@keyframes scaleIn { to { transform: scale(1); } }
+
+.modal-close:hover {
+    background-color: #f0f0f0;
+    transform: scale(1.1); /* Efeito de zoom subtil ao passar o rato */
+}
+
+
+/* 5. Iframe (Onde o conteúdo da página é carregado) */
+.modal-content iframe {
+    width: 100%;
+    height: 100%;
+    border: none; /* Remove a borda padrão do iframe */
+    margin-top: 15px; /* Espaço entre o topo da caixa e o início do conteúdo */
+}
+
+
+/* 6. Animações de Entrada */
+@keyframes fadeIn {
+    to { 
+        opacity: 1; 
+    }
+}
+
+@keyframes scaleIn {
+    to { 
+        transform: scale(1); 
+    }
+}
 ```
 
 ### Passo 2: Adicionar o JavaScript ao WordPress
@@ -103,40 +154,27 @@ Recomenda-se o uso do plugin [**WPCode – Insert Headers and Footers + Custom C
 ### Código JavaScript
 
 ```/**
- * Lightbox Inteligente para WordPress v2.0
- * Compatível com Gutenberg (Parágrafos, Botões) e Elementor (Widgets de Texto, Botões, etc.)
- * Abre links em lightbox no desktop e nova aba no mobile.
+ * Lightbox Inteligente para WordPress v2.3
+ * - Adicionada tentativa de delegar o scroll do overlay para o iframe.
+ * (Funciona apenas para links do mesmo domínio por razões de segurança).
+ * - Mantém o bloqueio de scroll reforçado como fallback.
  */
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Seleciona QUALQUER elemento que tenha a classe .link-modal. Isto é universal.
     const modalTriggers = document.querySelectorAll('.link-modal');
 
     modalTriggers.forEach(triggerElement => {
         let targetLink = null;
-
-        // Verifica se o próprio elemento com a classe é o link.
         if (triggerElement.tagName === 'A') {
             targetLink = triggerElement;
         } else {
-            // Se não for, encontra o primeiro link dentro dele.
-            // Isto funciona para blocos de botão e widgets do Elementor.
             targetLink = triggerElement.querySelector('a');
         }
-        
-        // Se encontrámos um link e ele ainda não foi processado...
         if (targetLink && !targetLink.classList.contains('modal-link-processed')) {
-            
-            // Marca este link como processado para evitar adicionar múltiplos 'ouvintes'
             targetLink.classList.add('modal-link-processed');
-            
             targetLink.addEventListener('click', function(event) {
-                // Impede o comportamento padrão do link
                 event.preventDefault();
-
                 const url = this.getAttribute('href');
-
-                // A lógica principal permanece a mesma
                 if (window.innerWidth <= 768) {
                     window.open(url, '_blank');
                 } else {
@@ -146,8 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // As funções de criar e fechar o modal não precisam de alterações.
-    // Elas são independentes do gatilho.
     function createModal(url) {
         const oldModal = document.getElementById('meu-modal-unico');
         if (oldModal) oldModal.remove();
@@ -158,18 +194,37 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const modalContent = document.createElement('div');
         modalContent.className = 'modal-content';
-
         const closeButton = document.createElement('span');
         closeButton.className = 'modal-close';
         closeButton.innerHTML = '&times;';
-
         const iframe = document.createElement('iframe');
         iframe.src = url;
 
+        // --- LÓGICA ATUALIZADA E FINAL ---
+        modalOverlay.addEventListener('wheel', event => {
+            // Previne sempre o scroll da página de fundo.
+            event.preventDefault();
+
+            // Tenta passar o scroll para o iframe
+            try {
+                // Esta linha só funcionará para iframes do mesmo domínio.
+                iframe.contentWindow.scrollBy(0, event.deltaY);
+            } catch (e) {
+                // Se falhar (por ser um domínio diferente), não faz nada.
+                // O scroll da página principal já foi prevenido.
+                console.warn("Scroll delegation to iframe failed due to Same-Origin Policy.");
+            }
+        }, { passive: false });
+
+        modalOverlay.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
+        
         modalContent.appendChild(closeButton);
         modalContent.appendChild(iframe);
         modalOverlay.appendChild(modalContent);
         document.body.appendChild(modalOverlay);
+
+        document.documentElement.classList.add('modal-aberto');
+        document.body.classList.add('modal-aberto');
 
         closeButton.addEventListener('click', closeModal);
         modalOverlay.addEventListener('click', function(event) {
@@ -180,6 +235,8 @@ document.addEventListener('DOMContentLoaded', function() {
     function closeModal() {
         const modal = document.getElementById('meu-modal-unico');
         if (modal) modal.remove();
+        document.documentElement.classList.remove('modal-aberto');
+        document.body.classList.remove('modal-aberto');
     }
 });
 ```
