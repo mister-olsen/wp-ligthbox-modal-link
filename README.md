@@ -34,71 +34,58 @@ Adicione o seguinte código CSS ao seu site. A forma mais segura é através do 
 3.  Copie e cole o código abaixo.
 
 ```css
-/* --- Versão Completa do CSS para o Lightbox Inteligente v2.x --- */
+/* --- CSS para o Lightbox Inteligente v4.0 --- */
 
-/* 1. Bloqueio de Scroll da Página de Fundo 
-   Esta é a regra reforçada que impede a página principal de fazer scroll
-   quando o modal está ativo. Atua sobre <html> e <body> para máxima
-   compatibilidade com temas e usa !important para garantir prioridade.
-*/
-html.modal-aberto,
-body.modal-aberto {
-  overflow: hidden !important;
-}
-
-
-/* 2. Fundo Escurecido (Overlay) 
-   Cobre a tela inteira e posiciona a janela do modal no centro.
-*/
+/* Fundo Escurecido (Overlay) */
 .modal-overlay {
-    position: fixed; /* Fica fixo na tela, mesmo com scroll */
+    position: fixed; 
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8); /* Fundo preto com 80% de transparência */
+    background-color: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10000; /* Garante que fica por cima de todos os outros elementos */
-    opacity: 0; /* Começa invisível para a animação */
-    animation: fadeIn 0.3s forwards; /* Aplica a animação de entrada */
+    z-index: 10000;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+
+    /* --- MELHORIA ADICIONADA --- */
+    /* Impede que o scroll "vaze" para a página de fundo. */
+    overscroll-behavior: contain;
 }
 
-
-/* 3. A Janela do Modal (Conteúdo) 
-   A caixa branca onde o conteúdo da outra página é exibido.
-*/
+/* A Janela do Modal (Conteúdo) */
 .modal-content {
     background-color: #fff;
     width: 90%;
-    max-width: 1200px; /* Largura máxima, pode ajustar se necessário */
+    max-width: 1200px;
     height: 90%;
-    max-height: 800px; /* Altura máxima, pode ajustar se necessário */
+    max-height: 800px;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.4);
-    position: relative; /* Necessário para posicionar o botão de fechar */
-    transform: scale(0.9); /* Começa ligeiramente mais pequeno para a animação */
-    animation: scaleIn 0.3s forwards; /* Aplica a animação de entrada */
+    position: relative;
+    transform: scale(0.9);
+    animation: scaleIn 0.3s forwards;
     display: flex;
-    flex-direction: column; /* Organiza o botão e o iframe verticalmente */
+    flex-direction: column;
 }
 
-
-/* 4. Botão de Fechar (o 'X') */
+/* O resto do CSS permanece igual... */
 .modal-close {
     position: absolute;
-    top: -15px; /* Posiciona-o ligeiramente fora da caixa branca */
+    top: -15px;
     right: -15px;
     background: #fff;
     color: #333;
     width: 35px;
     height: 35px;
-    border-radius: 50%; /* Torna-o redondo */
+    border-radius: 50%;
     font-size: 28px;
-    line-height: 33px; /* Alinha o 'X' verticalmente */
-    text-align: center; /* Alinha o 'X' horizontalmente */
+    line-height: 33px;
+    text-align: center;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     font-weight: bold;
@@ -107,31 +94,18 @@ body.modal-aberto {
 
 .modal-close:hover {
     background-color: #f0f0f0;
-    transform: scale(1.1); /* Efeito de zoom subtil ao passar o rato */
+    transform: scale(1.1);
 }
 
-
-/* 5. Iframe (Onde o conteúdo da página é carregado) */
 .modal-content iframe {
     width: 100%;
     height: 100%;
-    border: none; /* Remove a borda padrão do iframe */
-    margin-top: 15px; /* Espaço entre o topo da caixa e o início do conteúdo */
+    border: none;
+    margin-top: 15px;
 }
 
-
-/* 6. Animações de Entrada */
-@keyframes fadeIn {
-    to { 
-        opacity: 1; 
-    }
-}
-
-@keyframes scaleIn {
-    to { 
-        transform: scale(1); 
-    }
-}
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes scaleIn { to { transform: scale(1); } }
 ```
 
 ### Passo 2: Adicionar o JavaScript ao WordPress
@@ -154,13 +128,25 @@ Recomenda-se o uso do plugin [**WPCode – Insert Headers and Footers + Custom C
 ### Código JavaScript
 
 ```/**
- * Lightbox Inteligente para WordPress v2.3
- * - Adicionada tentativa de delegar o scroll do overlay para o iframe.
- * (Funciona apenas para links do mesmo domínio por razões de segurança).
- * - Mantém o bloqueio de scroll reforçado como fallback.
+ * Lightbox Inteligente para WordPress v4.0
+ * - Adicionada funcionalidade de fechar com a tecla "Escape".
+ * - Adicionada gestão de foco para acessibilidade (foco no modal ao abrir,
+ * retorno do foco ao elemento original ao fechar).
+ * - Compatível com Gutenberg e Elementor.
  */
 document.addEventListener('DOMContentLoaded', function() {
     
+    // --- MELHORIA DE ACESSIBILIDADE ---
+    // Variável para guardar o elemento que abriu o modal, para devolvermos o foco.
+    let triggeringElement = null;
+    
+    // Função que trata do clique na tecla Escape
+    const handleEscKey = (event) => {
+        if (event.key === 'Escape') {
+            closeModal();
+        }
+    };
+
     const modalTriggers = document.querySelectorAll('.link-modal');
 
     modalTriggers.forEach(triggerElement => {
@@ -170,10 +156,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             targetLink = triggerElement.querySelector('a');
         }
+        
         if (targetLink && !targetLink.classList.contains('modal-link-processed')) {
             targetLink.classList.add('modal-link-processed');
+            
             targetLink.addEventListener('click', function(event) {
                 event.preventDefault();
+
+                // --- MELHORIA DE ACESSIBILIDADE ---
+                // Guarda o elemento que foi clicado.
+                triggeringElement = document.activeElement;
+                
                 const url = this.getAttribute('href');
                 if (window.innerWidth <= 768) {
                     window.open(url, '_blank');
@@ -197,36 +190,31 @@ document.addEventListener('DOMContentLoaded', function() {
         const closeButton = document.createElement('span');
         closeButton.className = 'modal-close';
         closeButton.innerHTML = '&times;';
+        // Adiciona um atributo para o botão ser focável pelo teclado
+        closeButton.setAttribute('tabindex', '0'); 
+
         const iframe = document.createElement('iframe');
         iframe.src = url;
 
-        // --- LÓGICA ATUALIZADA E FINAL ---
-        modalOverlay.addEventListener('wheel', event => {
-            // Previne sempre o scroll da página de fundo.
-            event.preventDefault();
-
-            // Tenta passar o scroll para o iframe
-            try {
-                // Esta linha só funcionará para iframes do mesmo domínio.
-                iframe.contentWindow.scrollBy(0, event.deltaY);
-            } catch (e) {
-                // Se falhar (por ser um domínio diferente), não faz nada.
-                // O scroll da página principal já foi prevenido.
-                console.warn("Scroll delegation to iframe failed due to Same-Origin Policy.");
-            }
-        }, { passive: false });
-
-        modalOverlay.addEventListener('touchmove', event => event.preventDefault(), { passive: false });
-        
         modalContent.appendChild(closeButton);
         modalContent.appendChild(iframe);
         modalOverlay.appendChild(modalContent);
         document.body.appendChild(modalOverlay);
 
-        document.documentElement.classList.add('modal-aberto');
-        document.body.classList.add('modal-aberto');
-
+        // --- MELHORIA DE USABILIDADE E ACESSIBILIDADE ---
+        // 1. Adiciona o "ouvinte" para a tecla Escape
+        document.addEventListener('keydown', handleEscKey);
+        // 2. Move o foco para dentro do modal (para o botão de fechar)
+        closeButton.focus();
+        
         closeButton.addEventListener('click', closeModal);
+        // Permite fechar clicando Enter no botão focado
+        closeButton.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                closeModal();
+            }
+        });
+
         modalOverlay.addEventListener('click', function(event) {
             if (event.target === modalOverlay) closeModal();
         });
@@ -234,9 +222,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeModal() {
         const modal = document.getElementById('meu-modal-unico');
-        if (modal) modal.remove();
-        document.documentElement.classList.remove('modal-aberto');
-        document.body.classList.remove('modal-aberto');
+        if (modal) {
+            modal.remove();
+        }
+
+        // --- MELHORIA DE USABILIDADE E ACESSIBILIDADE ---
+        // 1. Remove o "ouvinte" da tecla Escape para não ficar ativo desnecessariamente
+        document.removeEventListener('keydown', handleEscKey);
+        // 2. Devolve o foco ao elemento que abriu o modal
+        if (triggeringElement) {
+            triggeringElement.focus();
+        }
     }
 });
 ```
